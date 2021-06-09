@@ -4,8 +4,9 @@ const port = 5000;
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const config = require('./config/key');
+const { auth } = require('./middleware/auth');
 
-const { User } = require('./User');
+const { User } = require('./models/User');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -25,7 +26,7 @@ mongoose
 
 app.get('/', (req, res) => res.send('안녕하십니까! 반가워요!'));
 
-app.post('/register', (req, res) => {
+app.post('/api/users/register', (req, res) => {
   const user = new User(req.body);
   user.save((err, userInfo) => {
     if (err) return res.json({ success: false, err });
@@ -35,7 +36,7 @@ app.post('/register', (req, res) => {
   });
 });
 
-app.post('/login', (req, res) => {
+app.post('/api/users/login', (req, res) => {
   User.findOne({ email: req.body.email }, (err, user) => {
     if (!user) {
       return res.json({
@@ -54,6 +55,15 @@ app.post('/login', (req, res) => {
         });
       });
     });
+  });
+});
+
+app.get('/api/users/auth', auth, (req, res) => {
+  res.status(200).json({
+    _id: req.user._id,
+    isAuth: true,
+    email: req.user.email,
+    name: req.user.name,
   });
 });
 
