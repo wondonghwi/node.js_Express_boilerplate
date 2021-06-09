@@ -2,12 +2,15 @@ const express = require('express');
 const app = express();
 const port = 5000;
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const config = require('./config/key');
+
 const { User } = require('./User');
 
-const config = require('./config/dev');
-
 app.use(bodyParser.urlencoded({ extended: true }));
+
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 const mongoose = require('mongoose');
 mongoose
@@ -42,7 +45,14 @@ app.post('/login', (req, res) => {
     }
     user.comparePassword(req.body.password, (err, isMatch) => {
       if (!isMatch) return res.json({ loginSuccess: false, message: '비밀번호가 틀렸습니다' });
-      user.generateToken((err, user) => {});
+      user.generateToken((err, user) => {
+        if (err) return res.status(400).send(err);
+
+        user.generateToken((err, user) => {
+          if (err) return res.status(400).send(err);
+          res.cookie('x_auth', user.token).status(200).json({ loginSuccess: true, userId: user._id });
+        });
+      });
     });
   });
 });
